@@ -118,11 +118,11 @@ workflow WholeGenomeGermlineSingleSample {
     call Utilities.ErrorWithMessage as PresetArgumentsError {
       input:
         message = "Both dragen_functional_equivalence_mode and dragen_maximum_quality_mode have been set to true, however, they are mutually exclusive. You can set either of them to true, or set them both to false and adjust the arguments individually."
-      runtime {
+    }
+    runtime {
         cpu: error_message_cpu
         memory: error_message_mem
         disks: "local-disk " + error_message_disk_gb + " HDD"
-      }
     }
   }
 
@@ -130,11 +130,11 @@ workflow WholeGenomeGermlineSingleSample {
     call Utilities.ErrorWithMessage as DragenModeVariantCallingAndGATK3Error {
       input:
         message = "DRAGEN mode variant calling has been activated, however, the HaplotypeCaller version has been set to use GATK 3. Please set use_gatk3_haplotype_caller to false to use DRAGEN mode variant calling."
-      runtime {
+    }
+    runtime {
         cpu: error_message_cpu
         memory: error_message_mem
         disks: "local-disk " + error_message_disk_gb + " HDD"
-      }
     }
   }
 
@@ -164,7 +164,6 @@ workflow WholeGenomeGermlineSingleSample {
       contamination_sites_ud = references.contamination_sites_ud,
       contamination_sites_bed = references.contamination_sites_bed,
       contamination_sites_mu = references.contamination_sites_mu,
-
       cross_check_fingerprints_by = cross_check_fingerprints_by,
       haplotype_database_file     = references.haplotype_database_file,
       lod_threshold               = lod_threshold,
@@ -306,8 +305,7 @@ workflow WholeGenomeGermlineSingleSample {
     File selfSM = UnmappedBamToAlignedBam.selfSM
     Float contamination = UnmappedBamToAlignedBam.contamination
 
-    File calculate_read_group_checksum_md5 = AggregatedBamQC.calculate_read_group_checksum_md5
-
+    File calculate_read_group_checksum_md5 = AggregatedBamQC.calculate_read_group_checksum_md5,
     File agg_alignment_summary_metrics = AggregatedBamQC.agg_alignment_summary_metrics
     File agg_bait_bias_detail_metrics = AggregatedBamQC.agg_bait_bias_detail_metrics
     File agg_bait_bias_summary_metrics = AggregatedBamQC.agg_bait_bias_summary_metrics
