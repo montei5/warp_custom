@@ -1,5 +1,6 @@
 version 1.0
 
+## note saying custom
 ## Copyright Broad Institute, 2018
 ##
 ## This WDL pipeline implements data pre-processing and initial variant calling (GVCF
@@ -39,9 +40,7 @@ import "../../../../../../structs/dna_seq/DNASeqStructs.wdl"
 # WORKFLOW DEFINITION
 workflow WholeGenomeGermlineSingleSample {
 
-
-  String pipeline_version = "3.3.4"
-
+  String pipeline_version = "3.1.11"
 
   input {
     SampleAndUnmappedBams sample_and_unmapped_bams
@@ -69,13 +68,61 @@ workflow WholeGenomeGermlineSingleSample {
     Boolean allow_empty_ref_alt = false
     Boolean use_dragen_hard_filtering = false
 
-    String cloud_provider
+    # ----------------------------------------------------
+    # Task-specific runtime parameters (CPUs, Memory, Disk)
+    # ----------------------------------------------------
+
+    # Presets for error messages
+    Int error_message_cpu = 1
+    String error_message_mem = "2G"
+    Int error_message_disk_gb = 10
+
+    # UnmappedBamToAlignedBam
+    Int unmapped_bam_to_aligned_bam_cpu = 8
+    String unmapped_bam_to_aligned_bam_mem = "52G"
+    Int unmapped_bam_to_aligned_bam_disk_gb = 248
+    Boolean unmapped_bam_to_aligned_bam_use_ssd = true
+
+    # AggregatedBamQC
+    Int aggregated_bam_qc_cpu = 2
+    String aggregated_bam_qc_mem = "24G"
+    Int aggregated_bam_qc_disk_gb = 150
+    Boolean aggregated_bam_qc_use_ssd = true
+
+    # BamToCram
+    Int bam_to_cram_cpu = 2
+    String bam_to_cram_mem = "24G"
+    Int bam_to_cram_disk_gb = 150
+    Boolean bam_to_cram_use_ssd = true
+
+    # CollectWgsMetrics
+    Int collect_wgs_metrics_cpu = 2
+    String collect_wgs_metrics_mem = "24G"
+    Int collect_wgs_metrics_disk_gb = 150
+    Boolean collect_wgs_metrics_use_ssd = true
+
+    # CollectRawWgsMetrics
+    Int collect_raw_wgs_metrics_cpu = 2
+    String collect_raw_wgs_metrics_mem = "24G"
+    Int collect_raw_wgs_metrics_disk_gb = 150
+    Boolean collect_raw_wgs_metrics_use_ssd = true
+
+    # VariantCalling (BamToGvcf)
+    Int bam_to_gvcf_cpu = 2
+    String bam_to_gvcf_mem = "11G"
+    Int bam_to_gvcf_disk_gb = 62
+    Boolean bam_to_gvcf_use_ssd = true
   }
 
   if (dragen_functional_equivalence_mode && dragen_maximum_quality_mode) {
     call Utilities.ErrorWithMessage as PresetArgumentsError {
       input:
         message = "Both dragen_functional_equivalence_mode and dragen_maximum_quality_mode have been set to true, however, they are mutually exclusive. You can set either of them to true, or set them both to false and adjust the arguments individually."
+      runtime {
+        cpu: error_message_cpu
+        memory: error_message_mem
+        disks: "local-disk " + error_message_disk_gb + " HDD"
+      }
     }
   }
 
@@ -83,6 +130,11 @@ workflow WholeGenomeGermlineSingleSample {
     call Utilities.ErrorWithMessage as DragenModeVariantCallingAndGATK3Error {
       input:
         message = "DRAGEN mode variant calling has been activated, however, the HaplotypeCaller version has been set to use GATK 3. Please set use_gatk3_haplotype_caller to false to use DRAGEN mode variant calling."
+      runtime {
+        cpu: error_message_cpu
+        memory: error_message_mem
+        disks: "local-disk " + error_message_disk_gb + " HDD"
+      }
     }
   }
 
@@ -121,6 +173,11 @@ workflow WholeGenomeGermlineSingleSample {
       use_bwa_mem                 = use_bwa_mem_,
       unmap_contaminant_reads     = unmap_contaminant_reads_,
       allow_empty_ref_alt         = allow_empty_ref_alt
+    runtime {
+      cpu: unmapped_bam_to_aligned_bam_cpu
+      memory: unmapped_bam_to_aligned_bam_mem
+      disks: "local-disk " + unmapped_bam_to_aligned_bam_disk_gb + if unmapped_bam_to_aligned_bam_use_ssd then " SSD" else " HDD"
+    }
   }
 
   call AggregatedQC.AggregatedBamQC {
@@ -135,6 +192,11 @@ workflow WholeGenomeGermlineSingleSample {
       fingerprint_genotypes_file = fingerprint_genotypes_file,
       fingerprint_genotypes_index = fingerprint_genotypes_index,
       papi_settings = papi_settings
+    runtime {
+      cpu: aggregated_bam_qc_cpu
+      memory: aggregated_bam_qc_mem
+      disks: "local-disk " + aggregated_bam_qc_disk_gb + if aggregated_bam_qc_use_ssd then " SSD" else " HDD"
+    }
   }
 
   call ToCram.BamToCram as BamToCram {
@@ -147,6 +209,11 @@ workflow WholeGenomeGermlineSingleSample {
       chimerism_metrics = AggregatedBamQC.agg_alignment_summary_metrics,
       base_file_name = sample_and_unmapped_bams.base_file_name,
       agg_preemptible_tries = papi_settings.agg_preemptible_tries
+    runtime {
+      cpu: bam_to_cram_cpu
+      memory: bam_to_cram_mem
+      disks: "local-disk " + bam_to_cram_disk_gb + if bam_to_cram_use_ssd then " SSD" else " HDD"
+    }
   }
 
   # QC the sample WGS metrics (stringent thresholds)
@@ -159,6 +226,11 @@ workflow WholeGenomeGermlineSingleSample {
       ref_fasta_index = references.reference_fasta.ref_fasta_index,
       wgs_coverage_interval_list = wgs_coverage_interval_list,
       preemptible_tries = papi_settings.agg_preemptible_tries
+    runtime {
+      cpu: collect_wgs_metrics_cpu
+      memory: collect_wgs_metrics_mem
+      disks: "local-disk " + collect_wgs_metrics_disk_gb + if collect_wgs_metrics_use_ssd then " SSD" else " HDD"
+    }
   }
 
   # QC the sample raw WGS metrics (common thresholds)
@@ -171,6 +243,11 @@ workflow WholeGenomeGermlineSingleSample {
       ref_fasta_index = references.reference_fasta.ref_fasta_index,
       wgs_coverage_interval_list = wgs_coverage_interval_list,
       preemptible_tries = papi_settings.agg_preemptible_tries
+    runtime {
+      cpu: collect_raw_wgs_metrics_cpu
+      memory: collect_raw_wgs_metrics_mem
+      disks: "local-disk " + collect_raw_wgs_metrics_disk_gb + if collect_raw_wgs_metrics_use_ssd then " SSD" else " HDD"
+    }
   }
 
   call ToGvcf.VariantCalling as BamToGvcf {
@@ -194,8 +271,12 @@ workflow WholeGenomeGermlineSingleSample {
       final_vcf_base_name = final_gvcf_base_name,
       agg_preemptible_tries = papi_settings.agg_preemptible_tries,
       use_gatk3_haplotype_caller = use_gatk3_haplotype_caller_,
-      use_dragen_hard_filtering = use_dragen_hard_filtering_,
-      cloud_provider = cloud_provider
+      use_dragen_hard_filtering = use_dragen_hard_filtering_
+    runtime {
+      cpu: bam_to_gvcf_cpu
+      memory: bam_to_gvcf_mem
+      disks: "local-disk " + bam_to_gvcf_disk_gb + if bam_to_gvcf_use_ssd then " SSD" else " HDD"
+    }
   }
 
   if (provide_bam_output) {
@@ -206,7 +287,6 @@ workflow WholeGenomeGermlineSingleSample {
   # Outputs that will be retained when execution is complete
   output {
     Array[File] quality_yield_metrics = UnmappedBamToAlignedBam.quality_yield_metrics
-
     Array[File] unsorted_read_group_base_distribution_by_cycle_pdf = UnmappedBamToAlignedBam.unsorted_read_group_base_distribution_by_cycle_pdf
     Array[File] unsorted_read_group_base_distribution_by_cycle_metrics = UnmappedBamToAlignedBam.unsorted_read_group_base_distribution_by_cycle_metrics
     Array[File] unsorted_read_group_insert_size_histogram_pdf = UnmappedBamToAlignedBam.unsorted_read_group_insert_size_histogram_pdf
