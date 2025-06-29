@@ -1,6 +1,6 @@
 version 1.0
 
-## note saying custom2
+## 3 note saying custom
 ## Copyright Broad Institute, 2018
 ##
 ## This WDL pipeline implements data pre-processing and initial variant calling (GVCF
@@ -119,22 +119,12 @@ workflow WholeGenomeGermlineSingleSample {
       input:
         message = "Both dragen_functional_equivalence_mode and dragen_maximum_quality_mode have been set to true, however, they are mutually exclusive. You can set either of them to true, or set them both to false and adjust the arguments individually."
     }
-    runtime {
-        cpu: error_message_cpu
-        memory: error_message_mem
-        disks: "local-disk " + error_message_disk_gb + " HDD"
-    }
   }
 
   if (run_dragen_mode_variant_calling && use_gatk3_haplotype_caller) {
     call Utilities.ErrorWithMessage as DragenModeVariantCallingAndGATK3Error {
       input:
         message = "DRAGEN mode variant calling has been activated, however, the HaplotypeCaller version has been set to use GATK 3. Please set use_gatk3_haplotype_caller to false to use DRAGEN mode variant calling."
-    }
-    runtime {
-        cpu: error_message_cpu
-        memory: error_message_mem
-        disks: "local-disk " + error_message_disk_gb + " HDD"
     }
   }
 
