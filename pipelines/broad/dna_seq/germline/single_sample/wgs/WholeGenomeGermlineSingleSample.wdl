@@ -1,6 +1,6 @@
 version 1.0
 
-## note saying custom
+## note saying custom2
 ## Copyright Broad Institute, 2018
 ##
 ## This WDL pipeline implements data pre-processing and initial variant calling (GVCF
@@ -305,7 +305,7 @@ workflow WholeGenomeGermlineSingleSample {
     File selfSM = UnmappedBamToAlignedBam.selfSM
     Float contamination = UnmappedBamToAlignedBam.contamination
 
-    File calculate_read_group_checksum_md5 = AggregatedBamQC.calculate_read_group_checksum_md5,
+    File calculate_read_group_checksum_md5 = AggregatedBamQC.calculate_read_group_checksum_md5
     File agg_alignment_summary_metrics = AggregatedBamQC.agg_alignment_summary_metrics
     File agg_bait_bias_detail_metrics = AggregatedBamQC.agg_bait_bias_detail_metrics
     File agg_bait_bias_summary_metrics = AggregatedBamQC.agg_bait_bias_summary_metrics
