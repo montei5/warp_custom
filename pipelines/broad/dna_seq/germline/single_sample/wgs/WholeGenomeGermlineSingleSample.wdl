@@ -1,6 +1,6 @@
 version 1.0
 
-## 3 note saying custom
+## 2 note saying custom
 ## Copyright Broad Institute, 2018
 ##
 ## This WDL pipeline implements data pre-processing and initial variant calling (GVCF
@@ -162,11 +162,11 @@ workflow WholeGenomeGermlineSingleSample {
       use_bwa_mem                 = use_bwa_mem_,
       unmap_contaminant_reads     = unmap_contaminant_reads_,
       allow_empty_ref_alt         = allow_empty_ref_alt
-    runtime {
-      cpu: unmapped_bam_to_aligned_bam_cpu
-      memory: unmapped_bam_to_aligned_bam_mem
-      disks: "local-disk " + unmapped_bam_to_aligned_bam_disk_gb + if unmapped_bam_to_aligned_bam_use_ssd then " SSD" else " HDD"
-    }
+  }
+  runtime {
+    cpu: unmapped_bam_to_aligned_bam_cpu
+    memory: unmapped_bam_to_aligned_bam_mem
+    disks: "local-disk " + unmapped_bam_to_aligned_bam_disk_gb + if unmapped_bam_to_aligned_bam_use_ssd then " SSD" else " HDD"
   }
 
   call AggregatedQC.AggregatedBamQC {
@@ -181,11 +181,11 @@ workflow WholeGenomeGermlineSingleSample {
       fingerprint_genotypes_file = fingerprint_genotypes_file,
       fingerprint_genotypes_index = fingerprint_genotypes_index,
       papi_settings = papi_settings
-    runtime {
-      cpu: aggregated_bam_qc_cpu
-      memory: aggregated_bam_qc_mem
-      disks: "local-disk " + aggregated_bam_qc_disk_gb + if aggregated_bam_qc_use_ssd then " SSD" else " HDD"
-    }
+  }
+  runtime {
+    cpu: aggregated_bam_qc_cpu
+    memory: aggregated_bam_qc_mem
+    disks: "local-disk " + aggregated_bam_qc_disk_gb + if aggregated_bam_qc_use_ssd then " SSD" else " HDD"
   }
 
   call ToCram.BamToCram as BamToCram {
@@ -198,11 +198,11 @@ workflow WholeGenomeGermlineSingleSample {
       chimerism_metrics = AggregatedBamQC.agg_alignment_summary_metrics,
       base_file_name = sample_and_unmapped_bams.base_file_name,
       agg_preemptible_tries = papi_settings.agg_preemptible_tries
-    runtime {
-      cpu: bam_to_cram_cpu
-      memory: bam_to_cram_mem
-      disks: "local-disk " + bam_to_cram_disk_gb + if bam_to_cram_use_ssd then " SSD" else " HDD"
-    }
+  }
+  runtime {
+    cpu: bam_to_cram_cpu
+    memory: bam_to_cram_mem
+    disks: "local-disk " + bam_to_cram_disk_gb + if bam_to_cram_use_ssd then " SSD" else " HDD"
   }
 
   # QC the sample WGS metrics (stringent thresholds)
@@ -215,11 +215,11 @@ workflow WholeGenomeGermlineSingleSample {
       ref_fasta_index = references.reference_fasta.ref_fasta_index,
       wgs_coverage_interval_list = wgs_coverage_interval_list,
       preemptible_tries = papi_settings.agg_preemptible_tries
-    runtime {
-      cpu: collect_wgs_metrics_cpu
-      memory: collect_wgs_metrics_mem
-      disks: "local-disk " + collect_wgs_metrics_disk_gb + if collect_wgs_metrics_use_ssd then " SSD" else " HDD"
-    }
+  }
+  runtime {
+    cpu: collect_wgs_metrics_cpu
+    memory: collect_wgs_metrics_mem
+    disks: "local-disk " + collect_wgs_metrics_disk_gb + if collect_wgs_metrics_use_ssd then " SSD" else " HDD"
   }
 
   # QC the sample raw WGS metrics (common thresholds)
@@ -232,11 +232,11 @@ workflow WholeGenomeGermlineSingleSample {
       ref_fasta_index = references.reference_fasta.ref_fasta_index,
       wgs_coverage_interval_list = wgs_coverage_interval_list,
       preemptible_tries = papi_settings.agg_preemptible_tries
-    runtime {
-      cpu: collect_raw_wgs_metrics_cpu
-      memory: collect_raw_wgs_metrics_mem
-      disks: "local-disk " + collect_raw_wgs_metrics_disk_gb + if collect_raw_wgs_metrics_use_ssd then " SSD" else " HDD"
-    }
+  }
+  runtime {
+    cpu: collect_raw_wgs_metrics_cpu
+    memory: collect_raw_wgs_metrics_mem
+    disks: "local-disk " + collect_raw_wgs_metrics_disk_gb + if collect_raw_wgs_metrics_use_ssd then " SSD" else " HDD"
   }
 
   call ToGvcf.VariantCalling as BamToGvcf {
@@ -261,11 +261,11 @@ workflow WholeGenomeGermlineSingleSample {
       agg_preemptible_tries = papi_settings.agg_preemptible_tries,
       use_gatk3_haplotype_caller = use_gatk3_haplotype_caller_,
       use_dragen_hard_filtering = use_dragen_hard_filtering_
-    runtime {
-      cpu: bam_to_gvcf_cpu
-      memory: bam_to_gvcf_mem
-      disks: "local-disk " + bam_to_gvcf_disk_gb + if bam_to_gvcf_use_ssd then " SSD" else " HDD"
-    }
+  }
+  runtime {
+    cpu: bam_to_gvcf_cpu
+    memory: bam_to_gvcf_mem
+    disks: "local-disk " + bam_to_gvcf_disk_gb + if bam_to_gvcf_use_ssd then " SSD" else " HDD"
   }
 
   if (provide_bam_output) {
