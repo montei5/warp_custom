@@ -21,7 +21,12 @@ task CollectQualityYieldMetrics {
     File input_bam
     String metrics_filename
 
-    Int preemptible_tries = 3
+    Int preemptible_tries = 0
+
+    # NEW: per-task knobs ────────────────────────────────────────────────
+    Int  cqym_mem_mb  = 3500                     # default unchanged
+    Int  cqym_cpu     = 1                        # picard is single-threaded here
+    String cqym_disk  = "local-disk " + (ceil(size(input_bam,"GiB"))+20) + " HDD"
   }
 
   Int disk_size = ceil(size(input_bam, "GiB")) + 20
@@ -35,8 +40,9 @@ task CollectQualityYieldMetrics {
   }
   runtime {
     docker: "us.gcr.io/broad-gotc-prod/picard-cloud:2.26.10"
-    disks: "local-disk " + disk_size + " HDD"
-    memory: "3500 MiB"
+    disks:  cqym_disk
+    memory: cqym_mem_mb + " MiB"
+    cpu:    cqym_cpu
     preemptible: preemptible_tries
   }
   output {
